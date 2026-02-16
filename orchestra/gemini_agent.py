@@ -3,31 +3,47 @@ from google.genai import types
 from google.genai.errors import APIError, ClientError, ServerError
 
 import json
+from datetime import datetime
+
+from agent_configurations import Agent_Configurations
 
 class Gemini_Agent():
-    def __init__(self, lst_prefared_models : list, json_config_file, agent_name : str):
-        #Model Details
-        self.prefared_models = lst_prefared_models
-        self.selected_model = None
+    def __init__(self, lst_prefared_models : list, json_config_file : json, agent_name : str):
+        #Agent Specifications
+        self.configurations = Agent_Configurations(agent_name=agent_name, prefared_models=lst_prefared_models, json_config_file=json_config_file)
         self.client = genai.Client()
+        self.selected_model = self._get_available_model()
         self.session = None
-        self.acitive_state = False
-        self.agent_name = agent_name
+        self.agent_status = False
+        self.google_config = None
         
-        #Agent Parameters
-        self.custom_configs_file = json_config_file
-        self.system_instructions = None
-        self.max_output_tokens = None
-        self.temprature = None
-        self.top_p = None
-        self.top_k = None
-        self.google_config = self._create_google_config_object()
+        #Question and Response
+        self.sent_content = None
+        self.token_count = None
+        self.response = None
     
     def update_active_model(self, new_model : str):
         self.selected_model = new_model
         
     def update_active_state(self, current_state : bool):
         self.acitive_state = current_state
+        
+    def _format_content(self, content):
+        formatted_data = {
+            "user_query": content,
+            "sent_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        return json.dumps(formatted_data, indent=4)
+        
+    def update_sent_content(self, new_content : str):
+        self.sent_content = self._format_content(new_content)  
+        
+    def update_response(self, new_response : types.GenerateContentResponse):
+        self.response = new_response  
+        
+    def extract_reponse_text(self : types.GenerateContentResponse):
+        return self.response.text
         
     def _get_available_model(self) -> str:
         #Gets available model based prefarred model selection
@@ -43,83 +59,65 @@ class Gemini_Agent():
                     return model_name
         
         print(f"ERROR: No suitable model found for {self.agent_name}")
-        return None
-            
-    def _initialize_agent_parameters(self):   
-        #Extract all configs from the file and create the generation config
-        self.system_instructions = self.config_file.get("system_prompt", None)
-        self.max_output_tokens= self.config_file.get("max_output_tokens", 1000)
-        self.temperature= self.config_file.get("temperature", 0.7)
-        self.top_p = self.config_file.get("top_p", 0.1)
-        self.top_k = self.config_file.get("top_k", 40)     
+        return None    
     
     def _refresh_google_config_object(self) -> types.GenerateContentConfig:
         #Makes config object
         generation_config = types.GenerateContentConfig(
-            system_instruction=self.system_instructions,
-            max_output_tokens=self.max_output_tokens,
-            temperature=self.temperature,
-            top_p=self.top_p,
-            top_k=self.top_k
+            system_instruction=self.configurations.system_instructions,
+            max_output_tokens=self.configurations.max_output_tokens,
+            temperature=self.configurations.temperature,
+            top_p=self.configurations.top_p,
+            top_k=self.configurations.top_k
         )
 
         return generation_config
     
-    def update_system_instructions(self, new_instructions : str):
-        self.system_instructions = new_instructions
-        
-    def update_max_output_tokens(self, new_max : int):
-        self.max_output_tokenss = new_max
-        
-    def update_temperature(self, new_temp : float):
-        self.temperature = new_temp
-        
-    def update_top_p(self, new_p : float):
-        self.top_p = new_p
-        
-    def update_top_k(self, new_k : float):
-        self.top_k = new_k
-    
     def _create_session(self):
         #Initialize all agent features
         self.session = self.client.chats.create(
-                        self.selected_model,
-                        self.google_config
+                        model=self.selected_model,
+                        config=self.google_config
                     )
-        
-    def agent_check(self) -> bool:
-        #Check if agent is ready for run
-        #Checks if model is found and provides feedback
-        if self.acitive_state is False:
-            self.prefared_models.pop(0)
-            self._get_available_model(self.prefared_models)
-            
-            if self.acitive is False:
-                return False
-        
-        #Creates session if needed
-        if self.session is None:
-            self._create_session()
-            
-        return True
     
-    def get_token_count(self, text: str) -> int:
+    def check_agent_status(self) -> str:
+        if self.acitive_state is False:
+                return f"Agent: {self.configurations.agent_name} is offline."
+    
+    def get_sent_content(self) -> json:
+        return self.sent_content
+    
+    def get_token_count(self) -> float:
+        return self.token_count
+    
+    def update_token_count(self, new_amount : float):
+        self.token_count = new_amount
+    
+    def determine_content_tokens(self, text : str):
         response = self.client.models.count_tokens(
             model=self.selected_model,
             contents=text
         )
+        tokens =  response.total_tokens
         
-        return response.total_tokens
+        if tokens is None:
+            return "There are no tokens generated."
+        
+        if tokens > self.max_output_tokens:
+            return f"Sent content exceeds current max token count. Aborting request."
+    
+        self.update_token_count(tokens)
+        return None
             
     def send_text_message(self, sent_content : json) -> json:
-        #Checks if content can be asked
-        if self.get_token_count(sent_content) > self.max_output_tokens:
-            return f"Sent content exceeds current max token count. Aborting request."
-        
+        err_status = self.determine_content_tokens(self.sent_content.get("user_query", None))
+        if err_status:
+            return err_status
+
         #Sends json format content to llm
         try:
             response_object = self.session.send_message(sent_content)
-            return response_object
+            return self.extract_reponse_text(response_object)
         
         except APIError as e:
             return f"An API error has occured : {e}"

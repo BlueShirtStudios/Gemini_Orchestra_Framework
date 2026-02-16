@@ -1,5 +1,5 @@
 {
-  "instruction_file": "./orchestrator_prompt.txt",
+  "instruction_file": "orchestra/agents/orchestrator/orchestrator_system_instruction.txt",
   "max_output_tokens": 1000,
   "temperature": 0.1,
   "top_p": 0.1,
