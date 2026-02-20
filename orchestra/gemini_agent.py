@@ -1,16 +1,15 @@
 from google import genai
 from google.genai import types
 from google.genai.errors import APIError, ClientError, ServerError
-
 import json
 from datetime import datetime
 
 from agent_configurations import Agent_Configurations
 
 class Gemini_Agent():
-    def __init__(self, lst_prefared_models : list, json_config_file : json, agent_name : str):
+    def __init__(self, agent_configs : Agent_Configurations):
         #Agent Specifications
-        self.configurations = Agent_Configurations(agent_name=agent_name, prefared_models=lst_prefared_models, json_config_file=json_config_file)
+        self.configurations = agent_configs
         self.client = genai.Client()
         self.selected_model = self._get_available_model()
         self.session = None
@@ -25,7 +24,7 @@ class Gemini_Agent():
     def update_active_model(self, new_model : str):
         self.selected_model = new_model
         
-    def update_active_state(self, current_state : bool):
+    def set_active_state(self, current_state : bool):
         self.acitive_state = current_state
         
     def _format_content(self, content):
@@ -36,14 +35,17 @@ class Gemini_Agent():
         
         return json.dumps(formatted_data, indent=4)
         
-    def update_sent_content(self, new_content : str):
+    def set_sent_content(self, new_content : str):
         self.sent_content = self._format_content(new_content)  
         
-    def update_response(self, new_response : types.GenerateContentResponse):
+    def aet_response(self, new_response : types.GenerateContentResponse):
         self.response = new_response  
         
     def extract_reponse_text(self : types.GenerateContentResponse):
         return self.response.text
+    
+    def agent_offline_msg(self):
+        return f"{self.configurations.agent_name} is offline. Aborting Procedure."
         
     def _get_available_model(self) -> str:
         #Gets available model based prefarred model selection
@@ -82,7 +84,9 @@ class Gemini_Agent():
     
     def check_agent_status(self) -> str:
         if self.acitive_state is False:
-                return f"Agent: {self.configurations.agent_name} is offline."
+            return f"Agent: {self.configurations.agent_name} is offline."
+        else:
+            return f"Agent: {self.configurations.agent_name} is online."
     
     def get_sent_content(self) -> json:
         return self.sent_content
@@ -90,7 +94,7 @@ class Gemini_Agent():
     def get_token_count(self) -> float:
         return self.token_count
     
-    def update_token_count(self, new_amount : float):
+    def set_token_count(self, new_amount : float):
         self.token_count = new_amount
     
     def determine_content_tokens(self, text : str):
@@ -98,25 +102,28 @@ class Gemini_Agent():
             model=self.selected_model,
             contents=text
         )
+        
         tokens =  response.total_tokens
-        
-        if tokens is None:
-            return "There are no tokens generated."
-        
         if tokens > self.max_output_tokens:
             return f"Sent content exceeds current max token count. Aborting request."
     
-        self.update_token_count(tokens)
+        self.set_token_count(tokens)
         return None
             
-    def send_text_message(self, sent_content : json) -> json:
-        err_status = self.determine_content_tokens(self.sent_content.get("user_query", None))
+    def send_text_message(self, sent_content : str) -> json:
+        #Check if question tokens are more than model limit
+        err_status = self.determine_content_tokens(sent_content)
+        
+        #Returns error message if it is
         if err_status:
             return err_status
+        
+        #Update the new question
+        self.set_sent_content(sent_content)
 
-        #Sends json format content to llm
+        #Sends formatted and clean text to llm
         try:
-            response_object = self.session.send_message(sent_content)
+            response_object = self.session.send_message(self.get_sent_content())
             return self.extract_reponse_text(response_object)
         
         except APIError as e:

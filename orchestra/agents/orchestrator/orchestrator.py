@@ -3,15 +3,16 @@ from datetime import datetime
 from pathlib import Path
 
 from orchestra.gemini_agent import Gemini_Agent
+from orchestra.agent_configurations import Agent_Configurations
 
 class Orchestrator(Gemini_Agent):
-    def __init__(self, prefarred_models : list, config_file: json, agent_name : str):
-        super().__init__(prefarred_models, config_file, agent_name)
+    def __init__(self, configs : Agent_Configurations):
+        super().__init__(configs)
         self.task_file_path = None
         
     def determine_agent_tasks(self):
-        response = self.send_text_message(self.get_content())
-        self.update_response(response)
+        response = self.send_text_message(self.get_sent_content())
+        self.set_sent_content(response)
         
     def _update_task_file_path(self, new_path : Path):
         self.task_file_path = new_path
@@ -29,9 +30,11 @@ class Orchestrator(Gemini_Agent):
     def does_file_exists(self):
         #Check if the file already exists
             file_path = Path("..", "tasks.json")
-            self.update_task_file_path(file_path)
-            if not Path.exists():
+            #Creates file if not there
+            if not file_path.exists():
                 Path.touch()
+                self.update_task_file_path(file_path)
+                
         
     def build_task_file(self) -> bool:
         try:
@@ -44,4 +47,5 @@ class Orchestrator(Gemini_Agent):
             return True
                 
         except Exception as e:
+            print(f"oops : {e}")
             return False
