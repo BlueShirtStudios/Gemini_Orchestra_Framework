@@ -9,6 +9,8 @@ class Orchestrator(Gemini_Agent):
     def __init__(self, configs : Agent_Configurations):
         super().__init__(configs)
         self.task_file_path = None
+        self.task = None
+        self.agents = list[str]
         
     def determine_agent_tasks(self):
         response = self.send_text_message(self.get_sent_content())
@@ -19,8 +21,7 @@ class Orchestrator(Gemini_Agent):
         
     def _updated_tasks(self) -> json:
         formatted_tasks = {
-            "given_query": f"{self.get_sent_content()}",
-            "query_tokens": f"{self.get_token_count()}",
+            "tasks": f"{self.get_token_count()}",
             "selected_agents": f"{self.response.text}",
             "sent_at": f"{datetime.now()}"
         }
