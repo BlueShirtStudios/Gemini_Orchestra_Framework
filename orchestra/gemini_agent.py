@@ -131,3 +131,25 @@ class Gemini_Agent():
         
         except (ClientError, ServerError) as e:
             return f"An Client or Server error has occured : {e}"
+        
+    def send_dict_message(self, received_dict : dict) -> json:
+        #Check if question tokens are more than model limit
+        err_status = self.determine_content_tokens(received_dict)
+        
+        #Returns error message if it is
+        if err_status:
+            return err_status
+        
+        #Update the new question
+        self.set_sent_content(received_dict)
+
+        #Sends formatted and clean text to llm
+        try:
+            response_object = self.session.send_message(self.get_sent_content())
+            return self.extract_reponse_text(response_object)
+        
+        except APIError as e:
+            return f"An API error has occured : {e}"
+        
+        except (ClientError, ServerError) as e:
+            return f"An Client or Server error has occured : {e}"

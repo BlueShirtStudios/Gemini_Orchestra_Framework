@@ -1,31 +1,52 @@
 #Custom import collection
-from orchestra.model_config import Orchestrator_Configs
+from orchestra.agent_configurations import Agent_Configurations
 from orchestra.agents.orchestrator.orchestrator import Orchestrator
+from orchestra.agents.general.general_agent import General_Agent
+from orchestra.agents.researcher.reseacher import Researcher
+
+from orchestra.engine_modes import EngineModes
+
+import json
 
 class Orchestration_Engine():
     def __init__(self):
+        #Engine Details
+        self.engine_modes = EngineModes()
+        self.engine_mode = None
         self.query = None
-        #Orchestrator
-        self.cfg_orchestrator = Orchestrator_Configs()
-        self.orchestration_agent = Orchestrator(self.cfg_orchestrator.get_models(),
-                                  self.cfg_orchestrator.get_config_file(),
-                                  self.cfg_orchestrator.get_agent_name()
-                                  )
         
-    def _intitialize_agents(self):
-    #Prepare the orchestration agent
-        status = self.orchestration_agent.prepare_for_run() 
-        print(status)   
-    
-    def check_agents(self):
-        print(self.orchestration_agent.check_agent_status())
+        #Default Agent Line-up
+        self.orchestrator = None
+        self.general = None
+        self.researcher = None
         
-    def update_query(self, new_query : str):
-        self.query = new_query
         
-    def start_performance(self) -> str:
-        #Send the query to the orchestration agent    
-        self.orchestration_agent.update_sent_content(self.query)
-        self.orchestration_agent.determine_agent_tasks()
-        if self.orchestration_agent.build_task_file() is False:
-            return f"Orchestration Failed: Could not build task file"
+    def create_orchestrator(self, prefarred_models : list, config_file : json):
+        orchestrator_configurations = Agent_Configurations(
+                agent_name="Orchestrator",
+                prefared_models=prefarred_models,
+                json_config_file=config_file
+        )
+        self.orchestrator = Orchestrator(orchestrator_configurations)  
+        
+    def create_general(self, prefarred_models : list, config_file : json):
+        orchestrator_configurations = Agent_Configurations(
+                agent_name="General",
+                prefared_models=prefarred_models,
+                json_config_file=config_file
+        )
+        self.general = Orchestrator(orchestrator_configurations)  
+        
+    def create_researcher(self, prefarred_models : list, config_file : json):
+        orchestrator_configurations = Agent_Configurations(
+                agent_name="Researcher",
+                prefared_models=prefarred_models,
+                json_config_file=config_file
+        )
+        self.researcher = Orchestrator(orchestrator_configurations)    
+        
+    def enable_orchestrasion(self):
+        self.engine_mode = self.engine_modes.Orchestration.name
+        
+
+
