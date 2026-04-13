@@ -20,6 +20,9 @@ class Gemini_Agent():
         self.sent_content = None
         self.token_count = None
         self.response = None
+        
+    def _encountered_error(function_name : str, error_msg : str) -> str:
+        return f"Error in {function_name} : {error_msg}"
     
     def update_active_model(self, new_model : str):
         self.selected_model = new_model
@@ -38,7 +41,7 @@ class Gemini_Agent():
     def set_sent_content(self, new_content : str):
         self.sent_content = self._format_content(new_content)  
         
-    def aet_response(self, new_response : types.GenerateContentResponse):
+    def set_response(self, new_response : types.GenerateContentResponse):
         self.response = new_response  
         
     def extract_reponse_text(self : types.GenerateContentResponse):
@@ -104,33 +107,27 @@ class Gemini_Agent():
         )
         
         tokens =  response.total_tokens
-        if tokens > self.max_output_tokens:
-            return f"Sent content exceeds current max token count. Aborting request."
-    
         self.set_token_count(tokens)
-        return None
             
     def send_text_message(self, sent_content : str) -> json:
         #Check if question tokens are more than model limit
-        err_status = self.determine_content_tokens(sent_content)
-        
-        #Returns error message if it is
-        if err_status:
-            return err_status
+        self.determine_content_tokens(sent_content)
+        if self.get_token_count() > self.configurations.max_output_tokens:
+            return f"Query exceeds model max tokens. Aborting request."
         
         #Update the new question
-        self.set_sent_content(sent_content)
+        self.set_sent_content(sent_content.strip)
 
         #Sends formatted and clean text to llm
         try:
             response_object = self.session.send_message(self.get_sent_content())
-            return self.extract_reponse_text(response_object)
+            self.set_response(response_object)
         
         except APIError as e:
-            return f"An API error has occured : {e}"
+            self._encountered_error(self.send_text_message.__name__,f"An API error has occured : {e}")
         
         except (ClientError, ServerError) as e:
-            return f"An Client or Server error has occured : {e}"
+            self._encountered_error(self.send_text_message.__name__, f"An Client or Server error has occured : {e}")
         
     def send_dict_message(self, received_dict : dict) -> json:
         #Check if question tokens are more than model limit
@@ -146,7 +143,7 @@ class Gemini_Agent():
         #Sends formatted and clean text to llm
         try:
             response_object = self.session.send_message(self.get_sent_content())
-            return self.extract_reponse_text(response_object)
+            self.set_response(response_object)
         
         except APIError as e:
             return f"An API error has occured : {e}"
