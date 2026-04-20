@@ -1,6 +1,6 @@
 import json
 
-class Agent_Configurations():
+class Configurations():
     def __init__(self, agent_name, prefared_models : list, json_config_file):
         #Agent Details
         self.agent_name = agent_name
@@ -13,6 +13,8 @@ class Agent_Configurations():
         self.temprature = None
         self.top_p = None
         self.top_k = None  
+        
+        self._initialize_agent_parameters()
         
     def _initialize_agent_parameters(self): 
         #Extract all configs from the file

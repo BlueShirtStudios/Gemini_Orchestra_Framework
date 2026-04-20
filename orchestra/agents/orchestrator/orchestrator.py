@@ -3,44 +3,41 @@ from datetime import datetime
 from pathlib import Path
 
 from orchestra.gemini_agent import Gemini_Agent
-from orchestra.agent_configurations import Agent_Configurations
+from orchestra.agent_configurations import Configurations
 
 class Orchestrator(Gemini_Agent):
-    def __init__(self, configs : Agent_Configurations):
+    def __init__(self, configs : Configurations):
         super().__init__(configs)
         self._task_file_path = None
-        self.task = None
-        self.agents = list[str]
+        self._task = None
+        self._agents = list[str]
         
     def determine_agent_tasks(self):
-        response = self.send_text_message(self.get_sent_content())
+        response = self.send_text_message()
         self.set_sent_content(response)
-        
-    def _encountered_error(function_name : str, error_msg : str) -> str:
-        return f"Error in {function_name} : {error_msg}"
     
     @property
     def agent(self) -> list:
-        return self.agents
+        return self._agents
     
     def add_to_agent_list(self, agent : str):
         self.agents.append(agent)
         
     @property
     def task(self) -> str:
-        return self.task
+        return self._task
     
     @task.setter
-    def set_task(self, task : str):
-        self.task = task
+    def task(self, task : str):
+        self._task = task
         
     @property
     def task_file_path(self) -> str:
-        return self.task_file_path
+        return self._task_file_path
         
     @task_file_path.setter     
-    def _set_task_file_path(self, new_path : Path):
-        self.task_file_path = new_path
+    def task_file_path(self, new_path : Path):
+        self._task_file_path = new_path
       
     @property   
     def _updated_tasks(self) -> json:
@@ -63,7 +60,7 @@ class Orchestrator(Gemini_Agent):
                 self.update_task_file_path(file_path)
                 
         
-    def build_task_file(self) -> bool:
+    def build_task_file(self):
         try:
             self._ensure_file_exists()
             
@@ -73,12 +70,8 @@ class Orchestrator(Gemini_Agent):
                 self._extract_agents()
                 f.write(self._updated_tasks())
              
-            #Show operation is successfull   
-            return True
-                
         except Exception as e:
             self._encountered_error(self.build_task_file.__name__, e)
-            return False
         
     def _extract_agents(self):
         try:

@@ -1,17 +1,17 @@
 from orchestra.gemini_agent import Gemini_Agent
-from orchestra.agent_configurations import Agent_Configurations
+from orchestra.agent_configurations import Configurations
 
 from orchestra.agents.researcher.document_handler import Document_Handler
 
 
 class Researcher(Gemini_Agent):
-    def __init__(self, agent_configs : Agent_Configurations):
+    def __init__(self, agent_configs : Configurations):
         super().__init__(agent_configs)
         self.provided_docs: list[Document_Handler] = []
         self.research_keywords = set()
         self.result_dict = dict()
         
-    def set_query(self, new_query : str):
+    def _set_query(self, new_query : str):
         keywords = set()
         for word in new_query.split():
             if len(word) > 3:
@@ -37,7 +37,7 @@ class Researcher(Gemini_Agent):
             
             self.provided_docs.append(research_file)
             
-    def format_result(self, indexs_to_format : list[int]):
+    def _format_result(self, indexs_to_format : list[int]):
         result_counter = 0
         for index in indexs_to_format:
             result_counter =+ 1
