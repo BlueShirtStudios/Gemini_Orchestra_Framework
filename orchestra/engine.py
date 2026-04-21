@@ -30,37 +30,49 @@ class Orchestration_Engine():
     def enable_file_loading(self):
         self.file_loading_enabled = True     
         
-    def create_orchestrator(self, prefarred_models : list, config_file : json):
-        if config_file is None:
-            config_file = Path("orchestra", "agents", "orchestrator", "orchestrator_config.json")
+    def create_orchestrator(self, prefarred_models : list):
+        #Full directory from running file to configs
+        BASE_DIR = Path(__file__).resolve().parent
+        config_file = BASE_DIR / "agents" / "orchestrator" / "orchestrator_config.json"
         
+        #Create a config object for the orchestrator
         orchestrator_configurations = Configurations(
                 agent_name="Orchestrator",
                 prefared_models=prefarred_models,
                 json_config_file=config_file
         )
+        
+        #Create an instance of the Orchestrator Class
         self.orchestrator = Orchestrator(orchestrator_configurations)  
         
-    def create_general(self, prefarred_models : list, config_file : json):
-        if config_file is None:
-            config_file = Path("orchestra", "agents", "general", "general_config.json")
+    def create_general(self, prefarred_models : list):
+        #Full directory from running file to configs
+        BASE_DIR = Path(__file__).resolve().parent
+        config_file = BASE_DIR / "agents" / "general" / "general_configs.json"
         
+        #Create a config object for the general agent
         general_configurations = Configurations(
                 agent_name="General",
                 prefared_models=prefarred_models,
                 json_config_file=config_file
         )
+        
+        #Create an instance of the General Agent
         self.general = General_Agent(general_configurations)  
         
-    def create_researcher(self, prefarred_models : list, config_file : json):
-        if config_file is None:
-            config_file = Path("orchestra", "agents", "researcher", "researcher_config.json")
+    def create_researcher(self, prefarred_models : list):
+        #Full directory from running file to configs
+        BASE_DIR = Path(__file__).resolve().parent
+        config_file = BASE_DIR / "agents" / "researcher" / "reasearcher_config.json"
         
+        #Create a config for the researcher agent
         researcher_configurations = Configurations(
                 agent_name="Researcher",
                 prefared_models=prefarred_models,
                 json_config_file=config_file
         )
+        
+        #Create an instance of the researcher agent
         self.researcher = Researcher(researcher_configurations)    
         
     def enable_orchestrasion(self):
@@ -101,6 +113,7 @@ class Orchestration_Engine():
         
     def _ensure_all_orchrestration_agent_active(self):
         pass
+        #tackle this later
             
     def _prepare_for_orchestration(self):        
         #Build Agent Dict

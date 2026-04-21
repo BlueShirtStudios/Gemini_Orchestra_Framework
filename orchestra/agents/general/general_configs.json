@@ -1,5 +1,5 @@
 {
-  "instruction_file": "orchestra/agents/orchestrator/general_system_instruction.txt",
+  "instruction_file": "agents/general/general_system_instruction.txt",
   "max_output_tokens": 2048,
   "temperature": 0.7,
   "top_p": 0.9,

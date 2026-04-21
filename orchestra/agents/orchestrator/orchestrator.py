@@ -10,18 +10,18 @@ class Orchestrator(Gemini_Agent):
         super().__init__(configs)
         self._task_file_path = None
         self._task = None
-        self._agents = list[str]
+        self._agents = []
         
     def determine_agent_tasks(self):
         response = self.send_text_message()
-        self.set_sent_content(response)
+        self.sent_content = response
     
     @property
-    def agent(self) -> list:
+    def agents(self) -> list:
         return self._agents
     
     def add_to_agent_list(self, agent : str):
-        self.agents.append(agent)
+        self._agents.append(agent)
         
     @property
     def task(self) -> str:
@@ -40,51 +40,48 @@ class Orchestrator(Gemini_Agent):
         self._task_file_path = new_path
       
     @property   
-    def _updated_tasks(self) -> json:
+    def _updated_tasks(self) -> str:
         formatted_tasks = {
-            "tasks": f"{self.task()}",
-            "selected_agents": f"{self.agents()}",
+            "tasks": f"{self.task}",
+            "selected_agents": f"{self.agents}",
             "sent_at": f"{datetime.now()}"
         }
-        
         return json.dumps(formatted_tasks)
     
-    @property
     def _ensure_file_exists(self):
-        #Check if the file already exists
-            file_path = Path("..", "tasks.json")
-            
-            #Creates file if not there
-            if not file_path.exists():
-                Path.touch()
-                self.update_task_file_path(file_path)
-                
+        file_path = Path("..", "tasks.json")
+        
+        if not file_path.exists():
+            file_path.touch()
+            self.task_file_path = file_path
         
     def build_task_file(self):
         try:
             self._ensure_file_exists()
             
-            #Add tasks to file
             with open(self.task_file_path, "w", encoding="utf-8") as f:
                 self._extract_task()
                 self._extract_agents()
-                f.write(self._updated_tasks())
+                f.write(self._updated_tasks)
              
         except Exception as e:
             self._encountered_error(self.build_task_file.__name__, e)
         
     def _extract_agents(self):
         try:
-            agent_list = self.get_sent_content().get('agents', None)
-            for agent in agent_list.split():
-                self.add_to_agent_list(agent)
+            content = json.loads(self.sent_content) if isinstance(self.sent_content, str) else self.sent_content
+            agent_list = content.get('agents', None)
+            if agent_list:
+                for agent in agent_list.split():
+                    self.add_to_agent_list(agent)
                 
         except Exception as e:
             self._encountered_error(self._extract_agents.__name__, e)
             
     def _extract_task(self):
         try:
-            self.task = self.get_sent_content().get('agents', None)
+            content = json.loads(self.sent_content) if isinstance(self.sent_content, str) else self.sent_content
+            self.task = content.get('task', None)
                 
         except Exception as e:
             self._encountered_error(self._extract_task.__name__, e)

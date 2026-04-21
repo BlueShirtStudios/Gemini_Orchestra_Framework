@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 class Configurations():
     def __init__(self, agent_name, prefared_models : list, json_config_file):
@@ -15,18 +16,35 @@ class Configurations():
         self.top_k = None  
         
         self._initialize_agent_parameters()
+    
+    def _str_to_path(self, str_path: str) -> Path:
+        if isinstance(str_path, Path):
+            return str_path
         
+        current_file_path = Path(__file__).resolve().parent
+        parts = [p for p in str_path.split('/') if p]
+        
+        for part in parts:
+            current_file_path = current_file_path / part
+            
+        return current_file_path
+    
     def _initialize_agent_parameters(self): 
-        #Extract all configs from the file
-        print(self.config_file) 
+        #Format the Path
+        self.config_file = self._str_to_path(self.config_file)
+        
+        #Read all configs from the file
         with open(self.config_file, "r") as f:
             config_data =  json.load(f)
             
-        #Extract system instructionjs from provided path        
+        #Read System instruction path from file and convert to path object      
         system_instructions_path = config_data.get("instruction_file", None)
+        system_instructions_path = self._str_to_path(system_instructions_path)
+        
+        #Read the file from the created path object
         if system_instructions_path:
-            with open(system_instructions_path, "r") as f:
-                self.system_instructions = json.load(f)
+            with open(system_instructions_path, "r", encoding= "utf-8") as f:
+                self.system_instructions = f.read()
                 
         else:
             self.system_instructions = None
