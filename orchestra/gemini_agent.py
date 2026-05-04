@@ -84,10 +84,12 @@ class Gemini_Agent():
     
     def _format_content(self, content: str):
         clean_content = content.strip()
-        formatted_data = {
-            "user_query": clean_content,
-            "sent_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        formatted_data = [
+            {
+            "role": "user",
+            "parts": [{"text" : clean_content}]
+            }
+        ]
         return formatted_data
         
     def _get_available_model(self) -> str:
@@ -124,14 +126,17 @@ class Gemini_Agent():
         status = "online" if self.is_active else "offline"
         return f"Agent: {self.configurations.agent_name} is {status}."
     
-    def determine_content_tokens(self, text: str):
+    def determine_content_tokens(self):
         response = self.client.models.count_tokens(
             model=self.selected_model,
-            contents=text
+            contents=self.sent_content
         )
         self.token_count = response.total_tokens
+        
+    def read_only_reponse_text(self) -> str:
+        return self.response.text
             
-    def send_text_message(self) -> str:
+    def send_text_message(self):
         #Prepare content
         self.sent_content = self._format_content(self.sent_content)
         
@@ -140,14 +145,17 @@ class Gemini_Agent():
             self._create_session()
 
         #Check token limits
-        self.determine_content_tokens(self._sent_content)
+        self.determine_content_tokens()
         if self.token_count > self.configurations.max_output_tokens:
             return "Query exceeds model max tokens. Aborting request."
 
+        #Get only the question from the formatted content
+        question = self.sent_content[0]["parts"][0]["text"]
+
+        #Send question to the agennt
         try:
-            response_object = self.session.send_message(self.sent_content["user_query"])
+            response_object = self.session.send_message(question)
             self.response = response_object
-            return self.response.text
         
         except APIError as e:
             return self._encountered_error("send_text_message", f"API error: {e}")

@@ -19,6 +19,9 @@ class Orchestration_Engine():
         self.agents = None
         self.file_loading_enabled = False
         
+        #Config Purpose Properties
+        self.PROJECT_BASE_DIR = Path(__file__).resolve().parent
+        
         #Default Agent Line-up
         self.orchestrator = None
         self.general = None
@@ -32,8 +35,7 @@ class Orchestration_Engine():
         
     def create_orchestrator(self, prefarred_models : list):
         #Full directory from running file to configs
-        BASE_DIR = Path(__file__).resolve().parent
-        config_file = BASE_DIR / "agents" / "orchestrator" / "orchestrator_config.json"
+        config_file = self.PROJECT_BASE_DIR / "agents" / "orchestrator" / "orchestrator_config.json"
         
         #Create a config object for the orchestrator
         orchestrator_configurations = Configurations(
@@ -43,12 +45,11 @@ class Orchestration_Engine():
         )
         
         #Create an instance of the Orchestrator Class
-        self.orchestrator = Orchestrator(orchestrator_configurations)  
+        self.orchestrator = Orchestrator(orchestrator_configurations, self.PROJECT_BASE_DIR)  
         
     def create_general(self, prefarred_models : list):
         #Full directory from running file to configs
-        BASE_DIR = Path(__file__).resolve().parent
-        config_file = BASE_DIR / "agents" / "general" / "general_configs.json"
+        config_file = self.PROJECT_BASE_DIR / "agents" / "general" / "general_configs.json"
         
         #Create a config object for the general agent
         general_configurations = Configurations(
@@ -62,8 +63,7 @@ class Orchestration_Engine():
         
     def create_researcher(self, prefarred_models : list):
         #Full directory from running file to configs
-        BASE_DIR = Path(__file__).resolve().parent
-        config_file = BASE_DIR / "agents" / "researcher" / "reasearcher_config.json"
+        config_file = self.PROJECT_BASE_DIR / "agents" / "researcher" / "researcher_config.json"
         
         #Create a config for the researcher agent
         researcher_configurations = Configurations(
@@ -81,16 +81,16 @@ class Orchestration_Engine():
     def set_query(self, new_query : str):
         self.query = new_query
         
-    def _readTaskFile(self):
+    def _read_task_file(self):
         with open(self.orchestrator.task_file_path, "r", encoding="utf-8") as f:
             tasks = json.load(f)
             self.task = tasks.get("tasks", None)
-            self.agents = tasks.get("agents", None)
+            self.agents = tasks.get("selected_agents", None)
             
     def _run_orchestrator(self):
         self.orchestrator.sent_content = self.query
         self.orchestrator.determine_agent_tasks()
-        self.orchestrator.build_task_file() 
+        self.orchestrator.write_to_task_file() 
         
     def _run_general(self) -> str:
         self.general.sent_content = self.query
