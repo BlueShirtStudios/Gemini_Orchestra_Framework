@@ -33,6 +33,20 @@ class Orchestration_Engine():
     def enable_file_loading(self):
         self.file_loading_enabled = True     
         
+    def enable_orchestrasion(self):
+        self.engine_mode = self.engine_modes.Orchestration.name
+        
+    def set_query(self, new_query : str):
+        self.query = new_query
+        
+    def prepare_engine(self):
+        #Check what options are toggled
+        #Orchestration Run
+        if self.engine_mode == self.engine_modes.Orchestration.name:
+            self._build_default_agent_dict()
+            self._ensure_all_orchrestration_agent_active()
+            
+        
     def create_orchestrator(self, prefarred_models : list):
         #Full directory from running file to configs
         config_file = self.PROJECT_BASE_DIR / "agents" / "orchestrator" / "orchestrator_config.json"
@@ -75,17 +89,13 @@ class Orchestration_Engine():
         #Create an instance of the researcher agent
         self.researcher = Researcher(researcher_configurations)    
         
-    def enable_orchestrasion(self):
-        self.engine_mode = self.engine_modes.Orchestration.name
-        
-    def set_query(self, new_query : str):
-        self.query = new_query
-        
     def _read_task_file(self):
+        #Reads the generated task file and extracts the details
         with open(self.orchestrator.task_file_path, "r", encoding="utf-8") as f:
             tasks = json.load(f)
-            self.task = tasks.get("tasks", None)
-            self.agents = tasks.get("selected_agents", None)
+            if tasks is not None:
+                self.task = tasks.get("tasks", None)
+                self.agents = tasks.get("selected_agents", None)
             
     def _run_orchestrator(self):
         self.orchestrator.sent_content = self.query
@@ -103,8 +113,8 @@ class Orchestration_Engine():
     def _build_default_agent_dict(self):
         #Save function location to call dynamicly
         self.call_dict = {
-            "general": self._run_general,
-            "researcher": self._run_researcher
+            "GENERAL_AGENT": self._run_general,
+            "RESEARCHER": self._run_researcher
         }
         
     def _read_from_orchestrator(self):
@@ -114,10 +124,6 @@ class Orchestration_Engine():
     def _ensure_all_orchrestration_agent_active(self):
         pass
         #tackle this later
-            
-    def _prepare_for_orchestration(self):        
-        #Build Agent Dict
-        self._build_default_agent_dict()
         
     def _call_agent(self, agent : str):
         try:
@@ -138,9 +144,12 @@ class Orchestration_Engine():
         
         #Let the call order be defined
         try:
-            self._readTaskFile()
+            self._read_task_file()
+            
         except Exception as e:
-            print(self.engine_function_error_msg(self._readTaskFile.__name__, e))
+            print(self.engine_function_error_msg(self._read_task_file.__name__, e))
+            
+            #Fallback emergency method if the file fails
             self._read_from_orchestrator()
             
         #Run the agents

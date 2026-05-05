@@ -1,5 +1,5 @@
 {
-  "instruction_file": "agents/researcher/researcher_system_instruction.txt",
+  "instruction_file": "agents/researcher/researcher_system_instructions.txt",
   "max_output_tokens": 1000,
   "temperature": 0.1,
   "top_p": 0.1,

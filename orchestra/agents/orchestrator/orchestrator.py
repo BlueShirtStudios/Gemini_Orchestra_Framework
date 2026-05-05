@@ -99,16 +99,15 @@ class Orchestrator(Gemini_Agent):
 
     def _formatted_tasks(self) -> json:
         formatted_tasks = {
-            "tasks": f"{self.task}",
-            "selected_agents": f"{self.agents}",
+            "tasks": self.task,
+            "selected_agents": self.agents,
         }
         return json.dumps(formatted_tasks)
     
     def _ensure_file_exists(self):
         #Create a default path for the task file
-        file_path = self.BASE_DIR / "tasks_testfile.json"
-            
-        if not file_path.exists():
+        if not self.task_file_path.exists():
+            file_path = self.BASE_DIR / "task_file.json"
             file_path.touch()
             self.task_file_path = file_path
         
@@ -116,8 +115,15 @@ class Orchestrator(Gemini_Agent):
         try:
             self._ensure_file_exists()
             
+            #Formats Response for File
+            formatted_tasks = {
+                "tasks": self.task,
+                "selected_agents": self.agents,
+            }
+            
+            #Writes formatted response to file
             with open(self.task_file_path, "w", encoding="utf-8") as f:
-                f.write(self._formatted_tasks())
+               json.dump(formatted_tasks, f, indent=4)
              
         except Exception as e:
             self._encountered_error(self.write_to_task_file.__name__, e)
