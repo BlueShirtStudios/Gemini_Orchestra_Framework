@@ -1,18 +1,18 @@
 from google import genai
 from google.genai import types
 from google.genai.errors import APIError, ClientError, ServerError
-import json
-from datetime import datetime
+from pathlib import Path
 
 from orchestra.agent_configurations import Configurations
 
 class Gemini_Agent():
     def __init__(self, agent_configs: Configurations):
+        #Agent Details
         self._configurations = agent_configs
         self._client = genai.Client()
         self._selected_model = self._get_available_model()
         self._session = None
-        self._is_active = False
+        self._active = False
         self._google_config = None
         
         self._sent_content = None 
@@ -44,16 +44,20 @@ class Gemini_Agent():
         self._session = value
 
     @property
-    def is_active(self) -> bool:
-        return self._is_active
+    def active(self) -> bool:
+        return self._active
 
-    @is_active.setter
-    def is_active(self, state: bool):
-        self._is_active = state
+    @active.setter
+    def active(self, state: bool):
+        self._active = state
 
     @property
-    def google_config(self):
+    def google_config(self) -> types.GenerateContentConfig:
         return self._google_config
+    
+    @google_config.setter
+    def google_config(self, goog_cfg : types.GenerateContentConfig):
+        self._google_config = goog_cfg
 
     @property
     def sent_content(self):

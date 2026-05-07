@@ -1,17 +1,21 @@
+from pathlib import Path
+
 from orchestra.gemini_agent import Gemini_Agent
 from orchestra.agent_configurations import Configurations
-
 from orchestra.agents.researcher.document_handler import Document_Handler
-
-
 class Researcher(Gemini_Agent):
     def __init__(self, agent_configs : Configurations):
         super().__init__(agent_configs)
-        self.provided_docs: list[Document_Handler] = []
-        self.research_keywords = set()
-        self.result_dict = dict()
+        self._document_list: list[Document_Handler] = []
+        self._research_keywords = set()
+        self._result_dict = dict()
         
-    def _set_query(self, new_query : str):
+    @property
+    def research_keywords(self) -> set:
+        return self._research_keywords
+    
+    @research_keywords.setter
+    def keywords(self, new_query : str):
         keywords = set()
         for word in new_query.split():
             if len(word) > 3:
@@ -19,11 +23,21 @@ class Researcher(Gemini_Agent):
                 
         self.research_keywords = keywords
         
-    def assignDocs(self, documents : str):
+    @property
+    def document_list(self) -> list[Document_Handler]:
+        return self.document_list
+    
+    @document_list.setter
+    def document_list(self, document_file_path : Path):
+        #First Check if it the correct type
+        if not isinstance(document_file_path, Path):
+            return None
+        
+    def assign_documents(self, documents : str):
         if documents is None:
             return None
         
-        #Assign a document to filepath provided
+        #Assign a document obj to filepath provided
         document_list = documents.strip().split()
         for document_path in document_list:
             try:

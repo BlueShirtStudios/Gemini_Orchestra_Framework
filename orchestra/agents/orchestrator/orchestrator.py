@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from pathlib import Path
 
 from orchestra.gemini_agent import Gemini_Agent
@@ -44,7 +43,7 @@ class Orchestrator(Gemini_Agent):
     
     @BASE_DIR.setter
     def BASE_DIR(self, path : Path):
-        self.BASE_DIR = path
+        self._BASE_DIR = path
     
     def determine_agent_tasks(self):
         try:

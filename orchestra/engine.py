@@ -1,3 +1,10 @@
+#Python Imports
+import json
+from pathlib import Path
+
+#Config Imports
+from orchestra.project_configs import PROJECT_BASE_DIR, ORCHESTRATOR_SETUP_FILE, GENERAL_SETUP_FILE, RESEARCHER_SETUP_FILE
+
 #Custom import collection
 from orchestra.agent_configurations import Configurations
 from orchestra.agents.orchestrator.orchestrator import Orchestrator
@@ -5,33 +12,23 @@ from orchestra.agents.general.general_agent import General_Agent
 from orchestra.agents.researcher.reseacher import Researcher
 from orchestra.engine_modes import EngineModes
 
-#Python Imports
-import json
-from pathlib import Path
-
 class Orchestration_Engine():
     def __init__(self):
         #Engine Details
         self.engine_modes = EngineModes
         self.engine_mode = None
-        self.query = None
-        self.task = None
-        self.agents = None
-        self.file_loading_enabled = False
-        
-        #Config Purpose Properties
-        self.PROJECT_BASE_DIR = Path(__file__).resolve().parent
         
         #Default Agent Line-up
         self.orchestrator = None
         self.general = None
         self.researcher = None
         
-        #Plug and play call order
-        self.call_dict = dict()
-        
-    def enable_file_loading(self):
-        self.file_loading_enabled = True     
+        #Orchestration Details
+        self.query = None
+        self.task = None
+        self.agents = None
+        self.response_text = None
+        self.call_dict = dict() 
         
     def enable_orchestrasion(self):
         self.engine_mode = self.engine_modes.Orchestration.name
@@ -48,42 +45,33 @@ class Orchestration_Engine():
             
         
     def create_orchestrator(self, prefarred_models : list):
-        #Full directory from running file to configs
-        config_file = self.PROJECT_BASE_DIR / "agents" / "orchestrator" / "orchestrator_config.json"
-        
         #Create a config object for the orchestrator
         orchestrator_configurations = Configurations(
                 agent_name="Orchestrator",
                 prefared_models=prefarred_models,
-                json_config_file=config_file
+                json_config_file=ORCHESTRATOR_SETUP_FILE
         )
         
         #Create an instance of the Orchestrator Class
-        self.orchestrator = Orchestrator(orchestrator_configurations, self.PROJECT_BASE_DIR)  
+        self.orchestrator = Orchestrator(orchestrator_configurations, PROJECT_BASE_DIR)  
         
     def create_general(self, prefarred_models : list):
-        #Full directory from running file to configs
-        config_file = self.PROJECT_BASE_DIR / "agents" / "general" / "general_configs.json"
-        
         #Create a config object for the general agent
         general_configurations = Configurations(
                 agent_name="General",
                 prefared_models=prefarred_models,
-                json_config_file=config_file
+                json_config_file=GENERAL_SETUP_FILE
         )
         
         #Create an instance of the General Agent
         self.general = General_Agent(general_configurations)  
         
     def create_researcher(self, prefarred_models : list):
-        #Full directory from running file to configs
-        config_file = self.PROJECT_BASE_DIR / "agents" / "researcher" / "researcher_config.json"
-        
         #Create a config for the researcher agent
         researcher_configurations = Configurations(
                 agent_name="Researcher",
                 prefared_models=prefarred_models,
-                json_config_file=config_file
+                json_config_file=RESEARCHER_SETUP_FILE
         )
         
         #Create an instance of the researcher agent
@@ -105,10 +93,13 @@ class Orchestration_Engine():
     def _run_general(self) -> str:
         self.general.sent_content = self.query
         self.general.send_text_message()
+        self.response_text = self.general.read_only_reponse_text()
         
     def _run_researcher(self) -> str:
-        self.researcher.scan_documents(self.query)
+        self.researcher.sent_content = self.response_text
+        self.researcher.scan_documents()
         self.researcher.give_research_result()
+        self.response_text = self.researcher.read_only_reponse_text()
     
     def _build_default_agent_dict(self):
         #Save function location to call dynamicly
@@ -134,9 +125,8 @@ class Orchestration_Engine():
             
     def _run_selected_agents(self):
         for agent in self.agents:
-            for key in self.call_dict:
-                if agent == key:
-                    self.call_dict[key]()     
+            if agent in self.call_dict:
+                self.call_dict[agent]()
                 
     def start_orchestration(self):
         #Run the orchestrator to determine agent tasks
@@ -157,3 +147,6 @@ class Orchestration_Engine():
             
     def engine_function_error_msg(self, function_name : str, error : str):
         return f"Error at {function_name}, Error : {error}"
+    
+    def add_research_document(self, str_path : str):
+        pass
