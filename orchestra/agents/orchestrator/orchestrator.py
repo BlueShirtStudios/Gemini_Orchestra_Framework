@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from orchestra.gemini_agent import Gemini_Agent
-from orchestra.agent_configurations import Configurations
+from orchestra.base.gemini_agent import Gemini_Agent
+from orchestra.base.agent_configurations import Configurations
 
 class Orchestrator(Gemini_Agent):
     def __init__(self, configs : Configurations, BASE_DIR_FOR_TASK_FILE : Path):

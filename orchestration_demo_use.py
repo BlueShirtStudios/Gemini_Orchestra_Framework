@@ -1,4 +1,4 @@
-from orchestra.engine import Orchestration_Engine
+from orchestra.main_src.engine import Orchestration_Engine
 from pathlib import Path
 
 """
@@ -22,7 +22,6 @@ myEngine.create_researcher(prefarred_models=["gemini-2.5-flash", "gemini-2.5-fla
 
 #After defining how you want to use the engine, we prepare it
 myEngine.prepare_engine()
-    
 
 """
 After the inialization we can feed it the question we need it answer. I will demonstate use in a while loop of input

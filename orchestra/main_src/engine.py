@@ -6,11 +6,11 @@ from pathlib import Path
 from orchestra.project_configs import PROJECT_BASE_DIR, ORCHESTRATOR_SETUP_FILE, GENERAL_SETUP_FILE, RESEARCHER_SETUP_FILE
 
 #Custom import collection
-from orchestra.agent_configurations import Configurations
+from orchestra.base.agent_configurations import Configurations
 from orchestra.agents.orchestrator.orchestrator import Orchestrator
 from orchestra.agents.general.general_agent import General_Agent
 from orchestra.agents.researcher.reseacher import Researcher
-from orchestra.engine_modes import EngineModes
+from orchestra.main_src.engine_modes import EngineModes
 
 class Orchestration_Engine():
     def __init__(self):

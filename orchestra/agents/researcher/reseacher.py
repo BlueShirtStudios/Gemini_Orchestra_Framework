@@ -1,14 +1,15 @@
 from pathlib import Path
 
-from orchestra.gemini_agent import Gemini_Agent
-from orchestra.agent_configurations import Configurations
-from orchestra.agents.researcher.document_handler import Document_Handler
+from orchestra.base.gemini_agent import Gemini_Agent
+from orchestra.base.agent_configurations import Configurations
+import document_support
+
 class Researcher(Gemini_Agent):
     def __init__(self, agent_configs : Configurations):
         super().__init__(agent_configs)
-        self._document_list: list[Document_Handler] = []
         self._research_keywords = set()
         self._result_dict = dict()
+        self._library = None
         
     @property
     def research_keywords(self) -> set:
@@ -23,33 +24,8 @@ class Researcher(Gemini_Agent):
                 
         self.research_keywords = keywords
         
-    @property
-    def document_list(self) -> list[Document_Handler]:
-        return self.document_list
-    
-    @document_list.setter
-    def document_list(self, document_file_path : Path):
-        #First Check if it the correct type
-        if not isinstance(document_file_path, Path):
-            return None
-        
     def assign_documents(self, documents : str):
-        if documents is None:
-            return None
-        
-        #Assign a document obj to filepath provided
-        document_list = documents.strip().split()
-        for document_path in document_list:
-            try:
-                #Assign file the details
-                research_file = Document_Handler()
-                research_file.set_knowledge_file(document_path)
-                research_file._load_file()
-                
-            except Exception as e:
-                return f"An error occurred during adding a research file {document_path}: {e}"
-            
-            self.provided_docs.append(research_file)
+        pass
             
     def _format_result(self, indexs_to_format : list[int]):
         result_counter = 0

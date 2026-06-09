@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from orchestra.project_configs import PROJECT_BASE_DIR
 
 class Configurations():
     def __init__(self, agent_name, prefared_models : list, json_config_file):
@@ -21,7 +22,7 @@ class Configurations():
         if isinstance(str_path, Path):
             return str_path
         
-        current_file_path = Path(__file__).resolve().parent
+        current_file_path = PROJECT_BASE_DIR
         parts = [p for p in str_path.split('/') if p]
         
         for part in parts:

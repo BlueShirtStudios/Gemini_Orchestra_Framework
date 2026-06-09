@@ -3,7 +3,7 @@ from google.genai import types
 from google.genai.errors import APIError, ClientError, ServerError
 from pathlib import Path
 
-from orchestra.agent_configurations import Configurations
+from orchestra.base.agent_configurations import Configurations
 
 class Gemini_Agent():
     def __init__(self, agent_configs: Configurations):
