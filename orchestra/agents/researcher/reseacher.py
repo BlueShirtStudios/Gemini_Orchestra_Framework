@@ -2,14 +2,19 @@ from pathlib import Path
 
 from orchestra.base.gemini_agent import Gemini_Agent
 from orchestra.base.agent_configurations import Configurations
-import document_support
+from document_support.main_library import Document_Library
+from orchestra.agents.researcher.researcher_prompts import ResearcherPrompts
 
 class Researcher(Gemini_Agent):
     def __init__(self, agent_configs : Configurations):
         super().__init__(agent_configs)
         self._research_keywords = set()
         self._result_dict = dict()
-        self._library = None
+        self._library = Document_Library()
+        self._ai_assisted_search = False
+        self._prompt_manager = ResearcherPrompts()
+        
+        self._initialize_library()
         
     @property
     def research_keywords(self) -> set:
@@ -23,40 +28,56 @@ class Researcher(Gemini_Agent):
                 keywords.add(word)
                 
         self.research_keywords = keywords
+    
+    @property
+    def results_dict(self) -> dict:
+        return self._result_dict
+    
+    @results_dict.setter
+    def results_dict(self, val: dict):
+        self._result_dict = val
         
-    def assign_documents(self, documents : str):
-        pass
-            
-    def _format_result(self, indexs_to_format : list[int]):
-        result_counter = 0
-        for index in indexs_to_format:
-            result_counter =+ 1
-            document = self.provided_docs[index]
-            self.result_dict = {f"Result {result_counter}" : f"{document.result}"}
-            
-    def scan_documents(self, query : str, doc_scan_limit : int = 5):
-        #Defines what we need
-        result_in_docs : list[int]
-        index = 0
+    @property
+    def library(self) -> Document_Library:
+        return self._library
+    
+    @property
+    def ai_assited_search(self) -> bool:
+        return self._ai_assisted_search
+    
+    @ai_assited_search.setter
+    def ai_assited_search(self, val : bool):
+        self._ai_assisted_search = val
         
-        #Updates query
-        self.set_query(query)
-        
-        #Scans all provided documents in the list
-        for document in self.provided_docs:
-            #Stops scan if results are found more than limit
-            if len(result_in_docs) < doc_scan_limit:
-                break
-            
-            document.search_by_keyword(self.research_keywords)  
-            if document.result is None:
-                index =+ 1
+    @property
+    def prompt_manager(self) -> str:
+        return self._prompt_manager
+    
+    def _initialize_library(self):
+        self.library.toggle_result_format_toDict(True)
+    
+    def add_document_to_library(self, paths: list[str]):
+        for file in paths:
+            try:
+                self.library.add_new_document(file)
+                
+            except:
                 continue
             
-            result_in_docs.append(index)  
-            index =+ 1   
-            
-        self.format_result(result_in_docs)
+    def _scan_library(self):
+        self.library.search_library(self.sent_content)
+        self.results = self.library.retrieve_results()
         
-    def give_research_result(self) -> str:
-        return self.send_dict_message(self.result_dict)
+    def _give_results_to_reseacher(self):
+        self.send_text_message(self.prompt_manager.deliver_results(self.results_dict))
+        
+    def _search_with_researcher_assit(self):
+        pass
+    
+    def search(self):
+        if self._ai_assisted_search:
+            self._search_with_researcher_assit()
+            
+        else:
+            self._scan_library()
+            self._give_results_to_reseacher()

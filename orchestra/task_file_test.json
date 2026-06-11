@@ -1,6 +1,6 @@
 {
-    "tasks": "Acknowledge greeting and provide a conversational response.",
+    "tasks": "Research and list the ingredients for butter chicken.",
     "selected_agents": [
-        "GENERAL_AGENT"
+        "RESEARCH_AGENT"
     ]
 }

@@ -1,5 +1,4 @@
 from orchestra.main_src.engine import Orchestration_Engine
-from pathlib import Path
 
 """
 This part only needs to be done once, intializing and creating the engine and agents. Ensure the intialization only happens once
@@ -19,6 +18,10 @@ myEngine.create_orchestrator(
 
 myEngine.create_general(prefarred_models=["gemini-2.5-flash", "gemini-2.5-flash-lite"])
 myEngine.create_researcher(prefarred_models=["gemini-2.5-flash", "gemini-2.5-flash-lite"])
+
+#After creating the researcher, we give it some files to work with
+file_list = ["C:\Danie\BlueShirtsStudio\Document_Handler\data_files\subnautica_wiki_test_1.jsonl"]
+myEngine.add_research_document(file_paths=file_list)
 
 #After defining how you want to use the engine, we prepare it
 myEngine.prepare_engine()

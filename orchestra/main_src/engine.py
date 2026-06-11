@@ -97,15 +97,14 @@ class Orchestration_Engine():
         
     def _run_researcher(self) -> str:
         self.researcher.sent_content = self.response_text
-        self.researcher.scan_documents()
-        self.researcher.give_research_result()
+        self.researcher.search()
         self.response_text = self.researcher.read_only_reponse_text()
     
     def _build_default_agent_dict(self):
         #Save function location to call dynamicly
         self.call_dict = {
             "GENERAL_AGENT": self._run_general,
-            "RESEARCHER": self._run_researcher
+            "RESEARCH_AGENT": self._run_researcher
         }
         
     def _read_from_orchestrator(self):
@@ -125,7 +124,7 @@ class Orchestration_Engine():
             
     def _run_selected_agents(self):
         for agent in self.agents:
-            if agent in self.call_dict:
+            if agent in self.call_dict.keys():
                 self.call_dict[agent]()
                 
     def start_orchestration(self):
@@ -148,5 +147,5 @@ class Orchestration_Engine():
     def engine_function_error_msg(self, function_name : str, error : str):
         return f"Error at {function_name}, Error : {error}"
     
-    def add_research_document(self, str_path : str):
-        pass
+    def add_research_document(self, file_paths: list[str]):
+        self.researcher.add_document_to_library(file_paths)
