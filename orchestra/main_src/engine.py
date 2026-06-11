@@ -96,7 +96,7 @@ class Orchestration_Engine():
         self.response_text = self.general.read_only_reponse_text()
         
     def _run_researcher(self) -> str:
-        self.researcher.sent_content = self.response_text
+        self.researcher.sent_content = self.query
         self.researcher.search()
         self.response_text = self.researcher.read_only_reponse_text()
     

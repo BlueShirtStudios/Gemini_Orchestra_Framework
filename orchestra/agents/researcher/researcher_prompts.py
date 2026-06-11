@@ -2,6 +2,14 @@ class ResearcherPrompts():
     def __init__(self):
         self._query = None
     
+    @property
+    def query(self) -> str:
+        return self._query
+    
+    @query.setter
+    def query(self, val: str):
+        self._query = val
+    
     def deliver_results(self, founding: dict) -> str:
         return f"""
         Here are the search results based on the keywords {self.query} search we did. Take the provided information

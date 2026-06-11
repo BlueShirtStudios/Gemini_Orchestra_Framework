@@ -2,32 +2,18 @@ from pathlib import Path
 
 from orchestra.base.gemini_agent import Gemini_Agent
 from orchestra.base.agent_configurations import Configurations
-from document_support.main_library import Document_Library
 from orchestra.agents.researcher.researcher_prompts import ResearcherPrompts
+from plp_library.main_library import Document_Library
 
 class Researcher(Gemini_Agent):
     def __init__(self, agent_configs : Configurations):
         super().__init__(agent_configs)
-        self._research_keywords = set()
         self._result_dict = dict()
         self._library = Document_Library()
         self._ai_assisted_search = False
         self._prompt_manager = ResearcherPrompts()
         
         self._initialize_library()
-        
-    @property
-    def research_keywords(self) -> set:
-        return self._research_keywords
-    
-    @research_keywords.setter
-    def keywords(self, new_query : str):
-        keywords = set()
-        for word in new_query.split():
-            if len(word) > 3:
-                keywords.add(word)
-                
-        self.research_keywords = keywords
     
     @property
     def results_dict(self) -> dict:
@@ -69,14 +55,13 @@ class Researcher(Gemini_Agent):
         self.results = self.library.retrieve_results()
         
     def _give_results_to_reseacher(self):
-        self.send_text_message(self.prompt_manager.deliver_results(self.results_dict))
-        
-    def _search_with_researcher_assit(self):
-        pass
+        self.prompt_manager.query = self.sent_content
+        built_message = self.prompt_manager.deliver_results(self.results_dict)
+        self.send_text_message(built_message)
     
     def search(self):
         if self._ai_assisted_search:
-            self._search_with_researcher_assit()
+            pass
             
         else:
             self._scan_library()

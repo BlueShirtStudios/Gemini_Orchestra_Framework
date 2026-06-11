@@ -165,3 +165,29 @@ class Gemini_Agent():
             return self._encountered_error("send_text_message", f"API error: {e}")
         except (ClientError, ServerError) as e:
             return self._encountered_error("send_text_message", f"Connection error: {e}")
+        
+    def send_text_message(self):
+        #Prepare content
+        self.sent_content = self._format_content(self.sent_content)
+        
+        #Ensure session exists
+        if not self.session:
+            self._create_session()
+
+        #Check token limits
+        self.determine_content_tokens()
+        if self.token_count > self.configurations.max_output_tokens:
+            return "Query exceeds model max tokens. Aborting request."
+
+        #Get only the question from the formatted content
+        question = self.sent_content[0]["parts"][0]["text"]
+
+        #Send question to the agennt
+        try:
+            response_object = self.session.send_message(question)
+            self.response = response_object
+        
+        except APIError as e:
+            return self._encountered_error("send_text_message", f"API error: {e}")
+        except (ClientError, ServerError) as e:
+            return self._encountered_error("send_text_message", f"Connection error: {e}")
