@@ -34,9 +34,12 @@ while runApp:
     question = input("What is your question? ")
     
     #Give the Engine the query
-    myEngine.set_query(question)
+    myEngine.query = question
     
     #Starts the whole process for the orchestration
     myEngine.start_orchestration()
-    print("")
+    
+    #Retreive the result
+    response = myEngine.final_reponse
+    print(response)
     

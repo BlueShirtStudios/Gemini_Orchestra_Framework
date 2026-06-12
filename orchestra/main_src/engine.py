@@ -8,6 +8,7 @@ from orchestra.project_configs import PROJECT_BASE_DIR, ORCHESTRATOR_SETUP_FILE,
 #Custom import collection
 from orchestra.base.agent_configurations import Configurations
 from orchestra.agents.orchestrator.orchestrator import Orchestrator
+from orchestra.base.agent_response_schemas import Orchestrator_Schema
 from orchestra.agents.general.general_agent import General_Agent
 from orchestra.agents.researcher.reseacher import Researcher
 from orchestra.main_src.engine_modes import EngineModes
@@ -15,31 +16,59 @@ from orchestra.main_src.engine_modes import EngineModes
 class Orchestration_Engine():
     def __init__(self):
         #Engine Details
-        self.engine_modes = EngineModes
-        self.engine_mode = None
+        self._engine_modes = EngineModes
+        self._engine_mode = None
         
-        #Default Agent Line-up
-        self.orchestrator = None
-        self.general = None
-        self.researcher = None
+        #Agent Line-up
+        self._orchestrator = None
+        self._general = None
+        self._researcher = None
+        self._call_dict = dict() 
         
         #Orchestration Details
-        self.query = None
-        self.task = None
-        self.agents = None
-        self.response_text = None
-        self.call_dict = dict() 
+        self._task = None
+        self._agents = None
+        
+        #Query and Response between agents
+        self._query = None
+        self._response_text = None
+        self._final_reponse = None
+        
+    @property
+    def query(self):
+        return self._query
+
+    @query.setter
+    def query(self, value):
+        self._query = value
+
+    @property
+    def response_text(self):
+        return self._response_text
+
+    @response_text.setter
+    def response_text(self, value):
+        self._response_text = value
+
+    @property
+    def call_dict(self):
+        return self._call_dict
+    
+    @property
+    def final_response(self) -> str:
+        return self._final_reponse
+    
+    @final_response.setter
+    def final_reponse(self, val: str):
+        self._final_reponse = val
         
     def enable_orchestrasion(self):
-        self.engine_mode = self.engine_modes.Orchestration.name
-        
-    def set_query(self, new_query : str):
-        self.query = new_query
+        self._engine_mode = self._engine_modes.Orchestration.name
         
     def prepare_engine(self):
         #Check what options are toggled
         #Orchestration Run
-        if self.engine_mode == self.engine_modes.Orchestration.name:
+        if self._engine_mode == self._engine_modes.Orchestration.name:
             self._build_default_agent_dict()
             self._ensure_all_orchrestration_agent_active()
             
@@ -49,7 +78,8 @@ class Orchestration_Engine():
         orchestrator_configurations = Configurations(
                 agent_name="Orchestrator",
                 prefared_models=prefarred_models,
-                json_config_file=ORCHESTRATOR_SETUP_FILE
+                json_config_file=ORCHESTRATOR_SETUP_FILE,
+                response_schema=Orchestrator_Schema
         )
         
         #Create an instance of the Orchestrator Class
@@ -86,23 +116,19 @@ class Orchestration_Engine():
                 self.agents = tasks.get("selected_agents", None)
             
     def _run_orchestrator(self):
-        self.orchestrator.sent_content = self.query
-        self.orchestrator.determine_agent_tasks()
+        self.orchestrator.determine_agent_tasks(self.query)
         self.orchestrator.write_to_task_file() 
         
     def _run_general(self) -> str:
-        self.general.sent_content = self.query
-        self.general.send_text_message()
-        self.response_text = self.general.read_only_reponse_text()
+        self.response_text = self.general.send_small_payload(self.query)
         
     def _run_researcher(self) -> str:
-        self.researcher.sent_content = self.query
-        self.researcher.search()
-        self.response_text = self.researcher.read_only_reponse_text()
+        self.researcher.query = self.query
+        self.response_text = self.researcher.search()
     
     def _build_default_agent_dict(self):
         #Save function location to call dynamicly
-        self.call_dict = {
+        self._call_dict = {
             "GENERAL_AGENT": self._run_general,
             "RESEARCH_AGENT": self._run_researcher
         }
@@ -143,6 +169,9 @@ class Orchestration_Engine():
             
         #Run the agents
         self._run_selected_agents()
+        
+        #Get the final response of the lasy called agent
+        self.final_reponse = self.response_text
             
     def engine_function_error_msg(self, function_name : str, error : str):
         return f"Error at {function_name}, Error : {error}"

@@ -1,6 +1,7 @@
 {
   "instruction_file": "agents/researcher/researcher_system_instructions.txt",
-  "max_output_tokens": 1000,
+  "max_payload_tokens": 1000,
+  "max_session_tokens": 10000,
   "temperature": 0.1,
   "top_p": 0.1,
   "top_k": 1

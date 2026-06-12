@@ -1,6 +1,6 @@
 {
-    "tasks": "Provide factual information about coral.",
+    "tasks": "Acknowledge the greeting.",
     "selected_agents": [
-        "RESEARCH_AGENT"
+        "GENERAL_AGENT"
     ]
 }

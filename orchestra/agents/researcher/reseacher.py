@@ -12,6 +12,7 @@ class Researcher(Gemini_Agent):
         self._library = Document_Library()
         self._ai_assisted_search = False
         self._prompt_manager = ResearcherPrompts()
+        self._query = None
         
         self._initialize_library()
     
@@ -39,6 +40,14 @@ class Researcher(Gemini_Agent):
     def prompt_manager(self) -> str:
         return self._prompt_manager
     
+    @property
+    def query(self) -> str:
+        return self._query
+    
+    @query.setter
+    def query(self, val: str):
+        self._query = val
+    
     def _initialize_library(self):
         self.library.toggle_result_format_toDict(True)
     
@@ -52,17 +61,19 @@ class Researcher(Gemini_Agent):
             
     def _scan_library(self):
         self.library.search_library(self.sent_content)
-        self.results = self.library.retrieve_results()
+        self.results_dict = self.library.retrieve_results()
         
     def _give_results_to_reseacher(self):
-        self.prompt_manager.query = self.sent_content
+        self.prompt_manager.query = self.query
         built_message = self.prompt_manager.deliver_results(self.results_dict)
-        self.send_text_message(built_message)
+        self.execute_stream_payload(built_message)
     
-    def search(self):
+    def search(self) -> any:
         if self._ai_assisted_search:
             pass
             
         else:
             self._scan_library()
-            self._give_results_to_reseacher()
+            response = self._give_results_to_reseacher()
+            
+        return response

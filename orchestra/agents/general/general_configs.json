@@ -1,6 +1,7 @@
 {
   "instruction_file": "agents/general/general_system_instruction.txt",
-  "max_output_tokens": 2048,
+  "max_payload_tokens": 1000,
+  "max_session_tokens": 10000,
   "temperature": 0.7,
   "top_p": 0.9,
   "top_k": 40
